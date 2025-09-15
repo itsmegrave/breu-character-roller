@@ -29,8 +29,8 @@
 </script>
 
 <svelte:head>
-  <title>[BREU] - Gerador de Personagens</title>
-  <meta name="description" content="Gerador de atributos para personagens de RPG usando dados 1d4-1d4" />
+  <title>[BREU] - Gerador de Atributos</title>
+  <meta name="description" content="Gerador de atributos para personagens do RPG Breu" />
 </svelte:head>
 
 <main class="flex min-h-screen flex-col items-center justify-center" aria-label="Aplicação geradora de atributos">
@@ -39,7 +39,7 @@
   </a>
 
   <h1 class="mb-8 text-center text-6xl tracking-wide text-white" id="page-title">
-    Gerador de Atributos para Breu
+    Gerador de Atributos
   </h1>
 
   <button
@@ -108,4 +108,25 @@
       </div>
     </section>
   {/if}
+
+  <footer class="mt-auto pt-8 pb-4 text-left
+  text-white w-4/5" style="font-family: var(--font-encode-sans);">
+    <div
+    class="mt-8 h-0.5 w-full bg-white"
+    role="separator"
+    aria-hidden="true"
+  ></div>
+  <p class="text-sm">
+      Feito com <span class="text-purple-400" aria-label="coração roxo">💜</span> por
+      <a
+        href="https://github.com/itsmegrave"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-purple-400 hover:text-purple-300 transition-colors duration-200"
+        aria-label="Perfil do GitHub de itsmegrave (abre em nova aba)"
+      >
+        itsmegrave
+      </a>
+    </p>
+  </footer>
 </main>
