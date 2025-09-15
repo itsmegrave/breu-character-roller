@@ -4,7 +4,7 @@ import * as Sentry from '@sentry/sveltekit';
 Sentry.init({
   dsn: 'https://efa1f44b928c262d7497e75da40deb8b@o4510024445329408.ingest.us.sentry.io/4510024446443520',
 
-  tracesSampleRate: 1.0,
+  tracesSampleRate: 0.1,
 
   // Enable logs to be sent to Sentry
   enableLogs: true,

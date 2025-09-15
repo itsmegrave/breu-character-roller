@@ -1,5 +1,7 @@
 <script>
   import { DiceRoll } from 'rpg-dice-roller';
+  import { initWebVitals, trackDiceAnimationPerformance, trackFontLoadingPerformance } from '$lib/web-vitals';
+  import { onMount } from 'svelte';
 
   // Constants
   const DICE_FORMULA = '1d4-1d4';
@@ -12,6 +14,12 @@
   let attributeValues = $state(createInitialAttributes());
   let showAttributes = $state(false);
 
+  // Initialize Web Vitals on component mount
+  onMount(() => {
+    initWebVitals();
+    trackFontLoadingPerformance();
+  });
+
   // Roll a single attribute value
   const rollSingleAttribute = () => {
     const roll = new DiceRoll(DICE_FORMULA);
@@ -20,11 +28,25 @@
 
   // Generate all attribute values
   const rollAttributes = () => {
-    attributeValues = attributeValues.map((attr) => ({
-      ...attr,
-      value: rollSingleAttribute()
-    }));
-    showAttributes = true;
+    // Track dice animation performance
+    const performanceTracker = trackDiceAnimationPerformance();
+
+    try {
+      const newAttributes = attributeValues.map((attr) => ({
+        ...attr,
+        value: rollSingleAttribute()
+      }));
+
+      attributeValues = newAttributes;
+      showAttributes = true;
+
+      // End performance tracking
+      performanceTracker.end();
+
+    } catch (error) {
+      console.error('Error generating attributes:', error);
+      performanceTracker.end();
+    }
   };
 </script>
 
