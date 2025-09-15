@@ -2,20 +2,19 @@
 @import './lib/assets/fonts/fonts.css';
 
 :root {
-	--font-encode-sans: 'Encode Sans Condensed', Arial, sans-serif;
-	--font-cormorant-infant: 'Cormorant Infant', serif;
-	--font-bondrians: 'Bondrians', serif;
+  --font-encode-sans: 'Encode Sans Condensed', Arial, sans-serif;
+  --font-cormorant-infant: 'Cormorant Infant', serif;
+  --font-bondrians: 'Bondrians', serif;
 }
 
 body {
-	background: rgb(0 0 0);
-	min-height: 100vh;
-	margin: 0;
-	color: rgb(255 255 255);
-	font-family: var(--font-cormorant-infant);
+  background: rgb(0 0 0);
+  min-height: 100vh;
+  margin: 0;
+  color: rgb(255 255 255);
+  font-family: var(--font-cormorant-infant);
 }
 
 h1 {
-	font-family: var(--font-bondrians);
+  font-family: var(--font-bondrians);
 }
-
