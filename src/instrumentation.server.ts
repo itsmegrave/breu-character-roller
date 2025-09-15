@@ -1,13 +1,5 @@
-import * as Sentry from '@sentry/sveltekit';
+// Sentry instrumentation for server-side (disabled for Cloudflare Workers)
+// Cloudflare Workers don't support traditional Node.js server instrumentation
+// We rely on client-side Sentry tracking instead
 
-Sentry.init({
-  dsn: import.meta.env.VITE_SENTRY_DSN,
-
-  tracesSampleRate: 1.0,
-
-  // Enable logs to be sent to Sentry
-  enableLogs: true
-
-  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
-  // spotlight: import.meta.env.DEV,
-});
+console.log('Server-side instrumentation skipped for Cloudflare Workers environment');

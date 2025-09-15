@@ -1,25 +1,38 @@
-import { handleErrorWithSentry, replayIntegration } from '@sentry/sveltekit';
 import * as Sentry from '@sentry/sveltekit';
+import { handleErrorWithSentry, replayIntegration } from '@sentry/sveltekit';
 
-Sentry.init({
-  dsn: 'https://efa1f44b928c262d7497e75da40deb8b@o4510024445329408.ingest.us.sentry.io/4510024446443520',
+// Only initialize Sentry if DSN is provided
+if (import.meta.env.VITE_SENTRY_DSN) {
+  Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN,
 
-  tracesSampleRate: 0.1,
+    // Performance monitoring
+    tracesSampleRate: 1.0,
 
-  // Enable logs to be sent to Sentry
-  enableLogs: true,
+    // Session replay for debugging user interactions
+    replaysSessionSampleRate: 0.1,
+    replaysOnErrorSampleRate: 1.0,
 
-  // This sets the sample rate to be 10%. You may want this to be 100% while
-  // in development and sample at a lower rate in production
-  replaysSessionSampleRate: 0.1,
+    integrations: [
+      replayIntegration({
+        // Mask all inputs for privacy
+        maskAllInputs: true,
+        // Block all media for smaller replay sizes
+        blockAllMedia: true,
+      }),
+    ],
 
-  // If the entire session is not sampled, use the below sample rate to sample
-  // sessions when an error occurs.
-  replaysOnErrorSampleRate: 1.0,
+    // Environment detection
+    environment: import.meta.env.MODE,
 
-  // If you don't want to use Session Replay, just remove the line below:
-  integrations: [replayIntegration()]
-});
+    // Custom tags for the RPG character roller
+    initialScope: {
+      tags: {
+        component: 'breu-character-roller',
+        type: 'client'
+      }
+    }
+  });
+}
 
-// If you have a custom error handler, pass it to `handleErrorWithSentry`
 export const handleError = handleErrorWithSentry();
