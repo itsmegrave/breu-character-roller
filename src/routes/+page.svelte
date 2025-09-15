@@ -1,7 +1,7 @@
-<script>
+<script lang="ts">
   import { DiceRoll } from 'rpg-dice-roller';
   import { initWebVitals, trackDiceAnimationPerformance, trackFontLoadingPerformance } from '$lib/web-vitals';
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
 
   // Constants
   const DICE_FORMULA = '1d4-1d4';
@@ -13,11 +13,21 @@
   // Reactive state using Svelte 5 runes
   let attributeValues = $state(createInitialAttributes());
   let showAttributes = $state(false);
+  let showDeathBanner = $state(false);
+  let countdown = $state(5);
+  let countdownInterval: number | null = null;
 
   // Initialize Web Vitals on component mount
   onMount(() => {
     initWebVitals();
     trackFontLoadingPerformance();
+  });
+
+  // Cleanup timer on component destroy
+  onDestroy(() => {
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+    }
   });
 
   // Roll a single attribute value
@@ -40,6 +50,31 @@
       attributeValues = newAttributes;
       showAttributes = true;
 
+      // Check if sum of attributes is less than 0
+      const attributeSum = newAttributes.reduce((sum, attr) => sum + attr.value, 0);
+
+      if (attributeSum < 0) {
+        showDeathBanner = true;
+        countdown = 5;
+
+        // Clear any existing interval
+        if (countdownInterval) {
+          clearInterval(countdownInterval);
+        }
+
+        // Start countdown timer
+        countdownInterval = setInterval(() => {
+          countdown--;
+          if (countdown <= 0) {
+            clearInterval(countdownInterval!);
+            countdownInterval = null;
+            showDeathBanner = false;
+            // Automatically re-generate attributes
+            rollAttributes();
+          }
+        }, 1000);
+      }
+
       // End performance tracking
       performanceTracker.end();
 
@@ -55,7 +90,8 @@
   <meta name="description" content="Gerador de atributos para personagens do RPG Breu" />
 </svelte:head>
 
-<main class="flex min-h-screen flex-col items-center justify-center" aria-label="Aplicação geradora de atributos">
+<div class="m-8">
+  <main class="flex min-h-screen flex-col items-center justify-center" aria-label="Aplicação geradora de atributos">
   <a href="#page-title" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:rounded">
     Pular para conteúdo principal
   </a>
@@ -65,7 +101,7 @@
   </h1>
 
   <button
-    class="cursor-pointer rounded-lg border-2 border-white bg-black px-10 py-4 text-2xl text-white transition-colors duration-200 hover:bg-white hover:text-black focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+    class="cursor-pointer rounded-lg border-2 border-white bg-black px-10 py-4 text-2xl text-white transition-colors duration-200 hover:bg-white hover:text-black focus:outline-none focus:ring-2 focus:ring-white"
     onclick={rollAttributes}
     aria-describedby="page-title"
     aria-label="Rolar dados para gerar atributos de personagem"
@@ -77,10 +113,32 @@
   </button>
 
   <div
-    class="mt-8 h-0.5 w-4/5 bg-white"
+    class="mt-8 h-0.5 w-full bg-white"
     role="separator"
     aria-hidden="true"
   ></div>
+
+  {#if showDeathBanner}
+    <div
+      class="mt-8 w-full bg-white border-2 border-white p-6 text-center animate-pulse mx-4"
+      role="alert"
+      aria-live="assertive"
+      aria-atomic="true"
+    >
+      <p class="text-2xl text-black mb-4" style="font-family: var(--font-bondrians);">
+        💀 Não sobreviveria por muito tempo no Breu.
+      </p>
+      <p class="text-lg text-gray-700" style="font-family: var(--font-encode-sans);">
+        Gerando novo personagem em {countdown}s...
+      </p>
+      <div class="mt-4 w-full bg-gray-300 rounded-full h-2">
+        <div
+          class="bg-black h-2 rounded-full transition-all duration-1000"
+          style="width: {((5 - countdown) / 5) * 100}%"
+        ></div>
+      </div>
+    </div>
+  {/if}
 
   {#if showAttributes}
     <section
@@ -131,14 +189,14 @@
     </section>
   {/if}
 
-  <footer class="mt-auto pt-8 pb-4 text-left
-  text-white w-4/5" style="font-family: var(--font-encode-sans);">
+
+  <footer class="mt-auto pt-8 pb-4 text-left text-white w-full" style="font-family: var(--font-encode-sans);">
     <div
     class="mt-8 h-0.5 w-full bg-white"
     role="separator"
     aria-hidden="true"
   ></div>
-  <p class="text-sm">
+    <p class="text-sm">
       Feito com <span class="text-purple-400" aria-label="coração roxo">💜</span> por
       <a
         href="https://github.com/itsmegrave"
@@ -148,7 +206,19 @@
         aria-label="Perfil do GitHub de itsmegrave (abre em nova aba)"
       >
         itsmegrave
-      </a>
+      </a>. Esse gerador é open source e você pode conferir o código no
+      <a
+        href="https://github.com/itsmegrave/breu-character-roller"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="text-purple-400 hover:text-purple-300 transition-colors duration-200"
+        aria-label="Repositório do GitHub de breu-character-roller (abre em nova aba)"
+      >
+        GitHub
+      </a>.
+      <br/>
+      Feito pela comunidade, para a comunidade.
     </p>
   </footer>
 </main>
+</div>
