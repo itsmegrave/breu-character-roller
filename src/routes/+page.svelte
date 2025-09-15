@@ -2,12 +2,14 @@
   import { onMount, onDestroy } from 'svelte';
   import { initWebVitals, trackFontLoadingPerformance } from '$lib/web-vitals';
   import { CharacterGenerator, calculateCountdownProgress } from '$lib/character-generator';
+  import { getRandomDeathPhrase } from '$lib/types';
   import type { Attribute } from '$lib/types';
 
   let attributeValues = $state<Attribute[]>([]);
   let showAttributes = $state(false);
   let showDeathBanner = $state(false);
   let countdown = $state(5);
+  let currentDeathPhrase = $state('');
 
   let characterGenerator: CharacterGenerator;
 
@@ -21,6 +23,7 @@
         showAttributes = true;
       },
       (initialCountdown: number) => {
+        currentDeathPhrase = getRandomDeathPhrase();
         showDeathBanner = true;
         countdown = initialCountdown;
       },
@@ -84,7 +87,7 @@
       aria-atomic="true"
     >
       <p class="text-2xl text-black mb-4" style="font-family: var(--font-bondrians);">
-        💀 Não sobreviveria por muito tempo no Breu.
+        💀 {currentDeathPhrase}
       </p>
       <p class="text-lg text-gray-700" style="font-family: var(--font-encode-sans);">
         Gerando novo personagem em {countdown}s...
