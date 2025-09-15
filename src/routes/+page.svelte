@@ -3,42 +3,34 @@
   import { initWebVitals, trackDiceAnimationPerformance, trackFontLoadingPerformance } from '$lib/web-vitals';
   import { onMount, onDestroy } from 'svelte';
 
-  // Constants
   const DICE_FORMULA = '1d4-1d4';
   const ATTRIBUTES = ['FOR', 'DES', 'CON', 'INT', 'SAB', 'CAR'];
 
-  // Create initial attributes structure
   const createInitialAttributes = () => ATTRIBUTES.map((name) => ({ name, value: 0 }));
 
-  // Reactive state using Svelte 5 runes
   let attributeValues = $state(createInitialAttributes());
   let showAttributes = $state(false);
   let showDeathBanner = $state(false);
   let countdown = $state(5);
   let countdownInterval: number | null = null;
 
-  // Initialize Web Vitals on component mount
   onMount(() => {
     initWebVitals();
     trackFontLoadingPerformance();
   });
 
-  // Cleanup timer on component destroy
   onDestroy(() => {
     if (countdownInterval) {
       clearInterval(countdownInterval);
     }
   });
 
-  // Roll a single attribute value
   const rollSingleAttribute = () => {
     const roll = new DiceRoll(DICE_FORMULA);
     return roll.total;
   };
 
-  // Generate all attribute values
   const rollAttributes = () => {
-    // Track dice animation performance
     const performanceTracker = trackDiceAnimationPerformance();
 
     try {
@@ -50,19 +42,16 @@
       attributeValues = newAttributes;
       showAttributes = true;
 
-      // Check if sum of attributes is less than 0
-      const attributeSum = newAttributes.reduce((sum, attr) => sum + attr.value, 0);
+      const attributesTotal = newAttributes.reduce((sum, attr) => sum + attr.value, 0);
 
-      if (attributeSum < 0) {
+      if (attributesTotal < 0) {
         showDeathBanner = true;
         countdown = 5;
 
-        // Clear any existing interval
         if (countdownInterval) {
           clearInterval(countdownInterval);
         }
 
-        // Start countdown timer
         countdownInterval = setInterval(() => {
           countdown--;
           if (countdown <= 0) {
@@ -75,7 +64,6 @@
         }, 1000);
       }
 
-      // End performance tracking
       performanceTracker.end();
 
     } catch (error) {
@@ -101,8 +89,9 @@
   </h1>
 
   <button
-    class="cursor-pointer rounded-lg border-2 border-white bg-black px-10 py-4 text-2xl text-white transition-colors duration-200 hover:bg-white hover:text-black focus:outline-none focus:ring-2 focus:ring-white"
+    class="rounded-lg border-2 border-white bg-black px-10 py-4 text-2xl text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white {showDeathBanner ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-white hover:text-black'}"
     onclick={rollAttributes}
+    disabled={showDeathBanner}
     aria-describedby="page-title"
     aria-label="Rolar dados para gerar atributos de personagem"
     aria-expanded={showAttributes}
