@@ -1,0 +1,11 @@
+/* Google Fonts import for Encode Sans Condensed and Cormorant Infant */
+@import url('https://fonts.googleapis.com/css2?family=Encode+Sans+Condensed:wght@400;700&family=Cormorant+Infant:wght@400;700&display=swap');
+
+/* Bondrians font-face (add the font files to src/lib/assets/fonts) */
+@font-face {
+  font-family: 'Bondrians';
+  src: url('/src/lib/assets/fonts/Bondrians.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}

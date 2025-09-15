@@ -1,2 +1,12 @@
+body {
+	font-family: var(--font-cormorant-infant);
+}
 @import 'tailwindcss';
+@import './lib/assets/fonts/fonts.css';
+/* Font family utility classes */
+:root {
+	--font-encode-sans: 'Encode Sans Condensed', Arial, sans-serif;
+	--font-cormorant-infant: 'Cormorant Infant', serif;
+	--font-bondrians: 'Bondrians', serif;
+}
 @plugin '@tailwindcss/typography';

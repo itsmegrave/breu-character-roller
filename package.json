@@ -44,5 +44,9 @@
 		"vitest": "^3.2.3",
 		"vitest-browser-svelte": "^0.1.0",
 		"wrangler": "^4.37.0"
+	},
+	"dependencies": {
+		"@3d-dice/dice-box-threejs": "^0.0.12",
+		"rpg-dice-roller": "^5.0.0"
 	}
 }
