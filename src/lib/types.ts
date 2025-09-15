@@ -31,7 +31,8 @@ export const DEATH_PHRASES = [
   'O terror do Breu é maior que sua resistência.',
   'Condenado a perecer nas profundezas do Breu.',
   'Os horrores do Breu superam sua capacidade.',
-  'Engolido pela escuridão infinita do Breu.'
+  'Engolido pela escuridão infinita do Breu.',
+  'Esse aqui foi jogar no Gigante.'
 ] as const;
 
 /**
