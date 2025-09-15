@@ -14,7 +14,9 @@
     "lint": "prettier --check . && eslint .",
     "lint:fix": "prettier --write . && eslint --fix.",
     "test:unit": "vitest",
-    "test": "npm run test:unit -- --run",
+    "test": "bun run test:unit -- --run",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest --coverage",
     "deploy": "bun run build && wrangler deploy",
     "cf-typegen": "wrangler types ./src/worker-configuration.d.ts"
   },

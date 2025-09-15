@@ -1,75 +1,44 @@
 <script lang="ts">
-  import { DiceRoll } from 'rpg-dice-roller';
-  import { initWebVitals, trackDiceAnimationPerformance, trackFontLoadingPerformance } from '$lib/web-vitals';
   import { onMount, onDestroy } from 'svelte';
+  import { initWebVitals, trackFontLoadingPerformance } from '$lib/web-vitals';
+  import { CharacterGenerator, calculateCountdownProgress } from '$lib/character-generator';
+  import type { Attribute } from '$lib/types';
 
-  const DICE_FORMULA = '1d4-1d4';
-  const ATTRIBUTES = ['FOR', 'DES', 'CON', 'INT', 'SAB', 'CAR'];
-
-  const createInitialAttributes = () => ATTRIBUTES.map((name) => ({ name, value: 0 }));
-
-  let attributeValues = $state(createInitialAttributes());
+  let attributeValues = $state<Attribute[]>([]);
   let showAttributes = $state(false);
   let showDeathBanner = $state(false);
   let countdown = $state(5);
-  let countdownInterval: number | null = null;
+
+  let characterGenerator: CharacterGenerator;
 
   onMount(() => {
     initWebVitals();
     trackFontLoadingPerformance();
+
+    characterGenerator = new CharacterGenerator(
+      (attributes: Attribute[]) => {
+        attributeValues = attributes;
+        showAttributes = true;
+      },
+      (initialCountdown: number) => {
+        showDeathBanner = true;
+        countdown = initialCountdown;
+      },
+      () => {
+        showDeathBanner = false;
+      },
+      (newCountdown: number) => {
+        countdown = newCountdown;
+      }
+    );
   });
 
   onDestroy(() => {
-    if (countdownInterval) {
-      clearInterval(countdownInterval);
-    }
+    characterGenerator?.destroy();
   });
 
-  const rollSingleAttribute = () => {
-    const roll = new DiceRoll(DICE_FORMULA);
-    return roll.total;
-  };
-
-  const rollAttributes = () => {
-    const performanceTracker = trackDiceAnimationPerformance();
-
-    try {
-      const newAttributes = attributeValues.map((attr) => ({
-        ...attr,
-        value: rollSingleAttribute()
-      }));
-
-      attributeValues = newAttributes;
-      showAttributes = true;
-
-      const attributesTotal = newAttributes.reduce((sum, attr) => sum + attr.value, 0);
-
-      if (attributesTotal < 0) {
-        showDeathBanner = true;
-        countdown = 5;
-
-        if (countdownInterval) {
-          clearInterval(countdownInterval);
-        }
-
-        countdownInterval = setInterval(() => {
-          countdown--;
-          if (countdown <= 0) {
-            clearInterval(countdownInterval!);
-            countdownInterval = null;
-            showDeathBanner = false;
-            // Automatically re-generate attributes
-            rollAttributes();
-          }
-        }, 1000);
-      }
-
-      performanceTracker.end();
-
-    } catch (error) {
-      console.error('Error generating attributes:', error);
-      performanceTracker.end();
-    }
+  const handleGenerateCharacter = () => {
+    characterGenerator?.generateCharacter();
   };
 </script>
 
@@ -90,7 +59,7 @@
 
   <button
     class="rounded-lg border-2 border-white bg-black px-10 py-4 text-2xl text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white {showDeathBanner ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-white hover:text-black'}"
-    onclick={rollAttributes}
+    onclick={handleGenerateCharacter}
     disabled={showDeathBanner}
     aria-describedby="page-title"
     aria-label="Rolar dados para gerar atributos de personagem"
@@ -123,7 +92,7 @@
       <div class="mt-4 w-full bg-gray-300 rounded-full h-2">
         <div
           class="bg-black h-2 rounded-full transition-all duration-1000"
-          style="width: {((5 - countdown) / 5) * 100}%"
+          style="width: {calculateCountdownProgress(countdown)}%"
         ></div>
       </div>
     </div>
