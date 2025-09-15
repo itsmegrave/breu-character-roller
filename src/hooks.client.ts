@@ -6,6 +6,9 @@ if (import.meta.env.VITE_SENTRY_DSN) {
   Sentry.init({
     dsn: import.meta.env.VITE_SENTRY_DSN,
 
+    // Project identification
+    release: `breu-character-roller`,
+
     // Performance monitoring
     tracesSampleRate: 1.0,
 

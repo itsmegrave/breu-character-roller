@@ -9,7 +9,7 @@ export default defineConfig({
     sentrySvelteKit({
       sourceMapsUploadOptions: {
         org: 'grave-labs',
-        project: 'javascript-sveltekit'
+        project: 'breu-character-roller'
       }
     }),
     tailwindcss(),
