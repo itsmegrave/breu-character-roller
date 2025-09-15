@@ -50,6 +50,7 @@
   },
   "dependencies": {
     "@3d-dice/dice-box-threejs": "^0.0.12",
+    "@sentry/sveltekit": "^10",
     "rpg-dice-roller": "^5.0.0"
   }
 }
