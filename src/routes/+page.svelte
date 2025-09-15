@@ -28,34 +28,84 @@
   };
 </script>
 
-<div class="flex min-h-screen flex-col items-center justify-center">
-  <h1 class="mb-8 text-center text-6xl tracking-wide text-white">Gerador de Atributos</h1>
+<svelte:head>
+  <title>[BREU] - Gerador de Personagens</title>
+  <meta name="description" content="Gerador de atributos para personagens de RPG usando dados 1d4-1d4" />
+</svelte:head>
+
+<main class="flex min-h-screen flex-col items-center justify-center" aria-label="Aplicação geradora de atributos">
+  <a href="#page-title" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:rounded">
+    Pular para conteúdo principal
+  </a>
+
+  <h1 class="mb-8 text-center text-6xl tracking-wide text-white" id="page-title">
+    Gerador de Atributos para Breu
+  </h1>
 
   <button
-    class="cursor-pointer rounded-lg border-2 border-white bg-black px-10 py-4 text-2xl text-white transition-colors duration-200 hover:bg-white hover:text-black"
+    class="cursor-pointer rounded-lg border-2 border-white bg-black px-10 py-4 text-2xl text-white transition-colors duration-200 hover:bg-white hover:text-black focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
     onclick={rollAttributes}
+    aria-describedby="page-title"
+    aria-label="Rolar dados para gerar atributos de personagem"
+    aria-expanded={showAttributes}
+    aria-controls={showAttributes ? "attributes-section" : undefined}
+    type="button"
   >
     Encare o Breu
   </button>
 
-  <div class="mt-8 h-0.5 w-4/5 bg-white"></div>
+  <div
+    class="mt-8 h-0.5 w-4/5 bg-white"
+    role="separator"
+    aria-hidden="true"
+  ></div>
 
   {#if showAttributes}
-    <div class="mt-8 w-4/5 max-w-md border-2 border-white p-6">
-      <div class="space-y-4">
+    <section
+      id="attributes-section"
+      class="mt-8 w-4/5 max-w-md border-2 border-white p-6"
+      aria-labelledby="attributes-heading"
+      aria-live="polite"
+    >
+      <h2 id="attributes-heading" class="sr-only">
+        Atributos gerados para o personagem
+      </h2>
+      <div class="space-y-4" role="list" aria-label="Lista de atributos do personagem"
+           aria-describedby="attributes-description">
+        <div id="attributes-description" class="sr-only">
+          Seis atributos foram gerados usando dados 1d4 menos 1d4, resultando em valores entre -3 e +3
+        </div>
         {#each attributeValues as attribute (attribute.name)}
-          <div class="flex items-center justify-between">
-            <span class="text-4xl text-white" style="font-family: var(--font-bondrians);">
+          <div
+            class="flex items-center justify-between"
+            role="listitem"
+            aria-label="Atributo {attribute.name}"
+          >
+            <span
+              class="text-4xl text-white"
+              style="font-family: var(--font-bondrians);"
+              id="attr-{attribute.name.toLowerCase()}"
+              aria-label="Nome do atributo: {attribute.name}"
+            >
               {attribute.name}
             </span>
-            <div class="flex h-16 w-16 items-center justify-center border border-white">
-              <span class="text-2xl text-white" style="font-family: var(--font-bondrians);">
-                {attribute.value ?? ''}
+            <div
+              class="flex h-16 w-16 items-center justify-center border border-white"
+              role="status"
+              aria-labelledby="attr-{attribute.name.toLowerCase()}"
+              aria-live="polite"
+            >
+              <span
+                class="text-2xl text-white"
+                style="font-family: var(--font-bondrians);"
+                aria-label="Valor do atributo {attribute.name}: {attribute.value}"
+              >
+                {attribute.value ?? 0}
               </span>
             </div>
           </div>
         {/each}
       </div>
-    </div>
+    </section>
   {/if}
-</div>
+</main>
