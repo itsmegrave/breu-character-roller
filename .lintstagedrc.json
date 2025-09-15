@@ -1,0 +1,11 @@
+{
+  "*.{js,ts,svelte,json,md,css,html}": [
+    "prettier --write"
+  ],
+  "*.{js,ts,svelte}": [
+    "eslint --fix"
+  ],
+  "*.{js,ts,svelte,spec.ts}": [
+    "bun run test -- --run --reporter=verbose --passWithNoTests"
+  ]
+}
