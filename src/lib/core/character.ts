@@ -1,7 +1,7 @@
 import { DiceRoll } from 'rpg-dice-roller';
 import { trackDiceAnimationPerformance } from '$lib/metrics/web-vitals';
 import type { Attribute, AttributeName } from '$lib/types';
-import { isDiceBoxInitialized, rollAttributesVisualOnePassForced } from '$lib/dice';
+import { isDiceBoxInitialized, rollDices } from '$lib/dice';
 
 export const DICE_FORMULA = '1d4-1d4';
 export const ATTRIBUTES: AttributeName[] = ['FOR', 'DES', 'CON', 'INT', 'SAB', 'CAR'];
@@ -96,7 +96,7 @@ export class CharacterGenerator {
 
     const perf = trackDiceAnimationPerformance();
     try {
-      await rollAttributesVisualOnePassForced(blues, reds);
+  await rollDices(blues, reds);
       const attributes: Attribute[] = ATTRIBUTES.map((name, idx) => ({ name, value: values[idx] ?? 0 }));
       this.processAttributes(attributes, perf.end);
     } catch (err) {

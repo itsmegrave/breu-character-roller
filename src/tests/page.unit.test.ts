@@ -3,7 +3,7 @@
  * These tests focus on the core business logic without DOM dependencies
  */
 
-import { test, expect, describe, beforeEach } from 'bun:test';
+import { test, expect, describe, beforeEach } from 'vitest';
 
 describe('RPG Character Roller - Unit Tests', () => {
   beforeEach(() => {

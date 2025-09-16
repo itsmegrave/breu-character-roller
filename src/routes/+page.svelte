@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { initWebVitals, trackFontLoadingPerformance } from '$lib/metrics/web-vitals';
-  import { CharacterGenerator, calculateCountdownProgress, ATTRIBUTES } from '$lib/core/character';
+  import { CharacterGenerator, calculateCountdownProgress } from '$lib/core/character';
   import { getRandomDeathPhrase } from '$lib/core/constants';
   import type { Attribute } from '$lib/types';
-  import { initDiceBoxDual, rollAttributesVisualOnePassForced, isDiceBoxInitialized, isDiceBoxRolling, clearDice } from '$lib/dice';
+  import { initDiceBoxDual, isDiceBoxRolling, clearDice } from '$lib/dice';
 
   let attributeValues = $state<Attribute[]>([]);
   let showAttributes = $state(false);

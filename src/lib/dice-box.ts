@@ -211,11 +211,11 @@ function updateDiceThemeFor(instance: DiceBoxInstance | null, opts: { background
  */
 export async function rollAttributesVisualBatched(attributeCount: number): Promise<number[]> {
   // Roll RED batch
-  updateDiceTheme({ background: '#d81128', foreground: '#000' });
+  updateDiceTheme({ background: '#991b1b', foreground: '#fff' });
   const red = await rollVisual(`${attributeCount}d4`);
 
   // Roll BLUE batch
-  updateDiceTheme({ background: '#1D4ED8', foreground: '#000' });
+  updateDiceTheme({ background: '#1e3a8a', foreground: '#fff' });
   const blue = await rollVisual(`${attributeCount}d4`);
 
   const reds = red.dice.map((d) => d.value ?? 0);
@@ -232,49 +232,26 @@ export async function rollAttributesVisualBatched(attributeCount: number): Promi
 }
 
 /**
- * One-pass attribute roll: rolls 2N d4 in a single animation. The first N are RED, the next N are BLUE.
- * Returns BLUE - RED for each pair.
- */
-export async function rollAttributesVisualOnePass(attributeCount: number): Promise<number[]> {
-  if (!diceBox || !initialized) throw new Error('DiceBox not initialized');
-
-  // Build a background array with first N BLUE, next N RED to visually distinguish in one roll
-  const blues = Array(attributeCount).fill('#1D4ED8');
-  const reds = Array(attributeCount).fill('#d81128');
-
-  updateDiceTheme({
-    background: [...blues, ...reds],
-    foreground: '#000',
-    material: 'plastic',
-    texture: 'none'
-  });
-
-  const result = await rollVisual(`${attributeCount * 2}d4`);
-  const values: number[] = [];
-  for (let i = 0; i < attributeCount; i++) {
-    const b = result.dice[i]?.value ?? 0; // first N treated as BLUE
-    const r = result.dice[attributeCount + i]?.value ?? 0; // next N treated as RED
-    values.push(b - r);
-  }
-  console.log(values);
-  return values;
-}
-
-/**
  * One-pass attribute roll with forced outcomes: use predetermined faces for BLUE first then RED.
  * Ensures visual dice exactly match the logical results used to compute attributes.
  */
-export async function rollAttributesVisualOnePassForced(blueFaces: number[], redFaces: number[]): Promise<number[]> {
-  const n = blueFaces.length;
-  if (n !== redFaces.length) throw new Error('blueFaces and redFaces must be same length');
+/**
+ * Drive two overlaid DiceBoxes with predetermined faces for each color.
+ * - Blue and Red arrays can be different lengths; both will be rolled visually as provided.
+ * - The returned array contains pairwise differences (blue - red) up to the shorter length.
+ */
+export async function rollDices(blueFaces: number[], redFaces: number[]): Promise<number[]> {
+  const nBlue = blueFaces.length;
+  const nRed = redFaces.length;
+  const n = Math.min(nBlue, nRed);
   if (!(diceBoxBlue && diceBoxRed && initialized)) throw new Error('Dual DiceBox not initialized');
 
   // Update themes per instance
-  updateDiceThemeFor(diceBoxBlue, { background: '#1D4ED8', foreground: '#000', material: 'plastic', texture: 'none' });
-  updateDiceThemeFor(diceBoxRed, { background: '#d81128', foreground: '#000', material: 'plastic', texture: 'none' });
+  updateDiceThemeFor(diceBoxBlue, { background: '#1e3a8a', foreground: '#fff', material: 'plastic', texture: 'none' });
+  updateDiceThemeFor(diceBoxRed, { background: '#991b1b', foreground: '#fff', material: 'plastic', texture: 'none' });
 
-  const blueNotation = `${n}d4@${blueFaces.join(',')}`;
-  const redNotation = `${n}d4@${redFaces.join(',')}`;
+  const blueNotation = `${nBlue}d4@${blueFaces.join(',')}`;
+  const redNotation = `${nRed}d4@${redFaces.join(',')}`;
 
   if (rolling) throw new Error('A visual roll is already in progress');
   rolling = true;
