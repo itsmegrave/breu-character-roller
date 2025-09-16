@@ -1,11 +1,11 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { initWebVitals, trackFontLoadingPerformance } from '$lib/web-vitals';
-  import { CharacterGenerator, calculateCountdownProgress, ATTRIBUTES } from '$lib/character-generator';
+  import { initWebVitals, trackFontLoadingPerformance } from '$lib/metrics/web-vitals';
+  import { CharacterGenerator, calculateCountdownProgress, ATTRIBUTES } from '$lib/core/character';
   import { DiceRoll } from 'rpg-dice-roller';
-  import { getRandomDeathPhrase } from '$lib/types';
+  import { getRandomDeathPhrase } from '$lib/core/constants';
   import type { Attribute } from '$lib/types';
-  import { initDiceBoxDual, rollAttributesVisualOnePassForced, isDiceBoxInitialized, isDiceBoxRolling, clearDice } from '$lib/dice-box';
+  import { initDiceBoxDual, rollAttributesVisualOnePassForced, isDiceBoxInitialized, isDiceBoxRolling, clearDice } from '$lib/dice';
 
   let attributeValues = $state<Attribute[]>([]);
   let showAttributes = $state(false);
@@ -19,9 +19,29 @@
   let diceBlueEl: HTMLDivElement | null = null;
   let diceRedEl: HTMLDivElement | null = null;
   let showDiceOverlay = $state(false);
-  let overlayHideTimer: number | null = null;
+  let overlayHideTimer: ReturnType<typeof setTimeout> | null = null;
   let isRollingVisual = $state(false);
   let diceInitFailed = $state(false);
+
+  function showOverlayFor(ms = 3000) {
+    showDiceOverlay = true;
+    if (overlayHideTimer) clearTimeout(overlayHideTimer);
+    overlayHideTimer = setTimeout(() => {
+      showDiceOverlay = false;
+      overlayHideTimer = null;
+      clearDice();
+    }, ms);
+  }
+
+  function makeRandomFaces(count: number): { blues: number[]; reds: number[] } {
+    const blues: number[] = [];
+    const reds: number[] = [];
+    for (let i = 0; i < count; i++) {
+      blues.push(Math.ceil(Math.random() * 4));
+      reds.push(Math.ceil(Math.random() * 4));
+    }
+    return { blues, reds };
+  }
 
   onMount(async () => {
     initWebVitals();
@@ -42,42 +62,6 @@
       },
       (newCountdown: number) => {
         countdown = newCountdown;
-      },
-      async () => {
-        // Visual roll at death start (does not change attributes)
-        if (!isDiceBoxInitialized()) return;
-        const blues: number[] = [];
-        const reds: number[] = [];
-        for (let i = 0; i < ATTRIBUTES.length; i++) {
-          blues.push(Math.ceil(Math.random() * 4));
-          reds.push(Math.ceil(Math.random() * 4));
-        }
-        showDiceOverlay = true;
-        if (overlayHideTimer) clearTimeout(overlayHideTimer);
-  overlayHideTimer = setTimeout(() => { showDiceOverlay = false; overlayHideTimer = null; clearDice(); }, 3000) as unknown as number;
-        try {
-          await rollAttributesVisualOnePassForced(blues, reds);
-        } catch (e) {
-          console.warn('Death visual roll skipped:', e);
-        }
-      },
-      async () => {
-        // After countdown finishes, roll dice again to "reload" visually, then generator will regenerate logically
-        if (!isDiceBoxInitialized()) return;
-        const blues: number[] = [];
-        const reds: number[] = [];
-        for (let i = 0; i < ATTRIBUTES.length; i++) {
-          blues.push(Math.ceil(Math.random() * 4));
-          reds.push(Math.ceil(Math.random() * 4));
-        }
-        showDiceOverlay = true;
-        if (overlayHideTimer) clearTimeout(overlayHideTimer);
-      overlayHideTimer = setTimeout(() => { showDiceOverlay = false; overlayHideTimer = null; clearDice(); }, 3000) as unknown as number;
-        try {
-          await rollAttributesVisualOnePassForced(blues, reds);
-        } catch (e) {
-          console.warn('Post-death visual roll skipped:', e);
-        }
       }
     );
     // Initialize dual dice boxes (browser only)
@@ -96,43 +80,14 @@
   async function handleGenerateCharacter() {
     if (!characterGenerator) return;
     if (characterGenerator.isRolling || isRollingVisual) return;
-    // If dice box not available, fallback to logical generation
-    if (!isDiceBoxInitialized()) {
-      characterGenerator.generateCharacter();
-      return;
-    }
 
-  isRollingVisual = true;
-  showDiceOverlay = true;
-  if (overlayHideTimer) clearTimeout(overlayHideTimer);
-  overlayHideTimer = setTimeout(() => { showDiceOverlay = false; overlayHideTimer = null; clearDice(); }, 3000) as unknown as number;
-    characterGenerator.setRolling(true);
-    showAttributes = false; // hide old while rolling new
+    // Page-only UI concerns
+    showAttributes = false;
+    isRollingVisual = true;
+    showOverlayFor(3000);
 
     try {
-      // Source of truth: compute faces with DiceRoll (two 1d4 per attribute)
-      const blues: number[] = [];
-      const reds: number[] = [];
-      const values: number[] = [];
-      for (let i = 0; i < ATTRIBUTES.length; i++) {
-        const bRoll = new DiceRoll('1d4');
-        const rRoll = new DiceRoll('1d4');
-        const b = Number(bRoll.total);
-        const r = Number(rRoll.total);
-        blues.push(b);
-        reds.push(r);
-        values.push(b - r);
-      }
-      // Animate exactly these faces: BLUE then RED in one pass
-      await rollAttributesVisualOnePassForced(blues, reds);
-      // Update state from the computed logical values
-      const attributes: Attribute[] = ATTRIBUTES.map((name, idx) => ({ name, value: values[idx] ?? 0 }));
-      characterGenerator.processAttributes(attributes);
-    } catch (err) {
-      console.error('Visual dice roll failed, fallback to logical:', err);
-      // Reset rolling state before fallback so logical generation proceeds
-      characterGenerator.setRolling(false);
-      characterGenerator.generateCharacter();
+      await characterGenerator.generateCharacterWithVisuals();
     } finally {
       isRollingVisual = false;
     }

@@ -1,6 +1,7 @@
 import { DiceRoll } from 'rpg-dice-roller';
 import { trackDiceAnimationPerformance } from '$lib/metrics/web-vitals';
 import type { Attribute, AttributeName } from '$lib/types';
+import { isDiceBoxInitialized, rollAttributesVisualOnePassForced } from '$lib/dice';
 
 export const DICE_FORMULA = '1d4-1d4';
 export const ATTRIBUTES: AttributeName[] = ['FOR', 'DES', 'CON', 'INT', 'SAB', 'CAR'];
@@ -42,20 +43,13 @@ export function calculateCountdownProgress(countdown: number, maxTime: number = 
 export class CharacterGenerator {
   private countdownInterval: ReturnType<typeof setInterval> | null = null;
   private rolling = false;
-  private onDeathVisualRoll?: () => void;
-  private onRegenerateAfterDeath?: () => Promise<void> | void;
 
   constructor(
     private onAttributesGenerated: (attributes: Attribute[]) => void,
     private onDeathBannerShow: (countdown: number) => void,
     private onDeathBannerHide: () => void,
-    private onCountdownUpdate: (countdown: number) => void,
-    onDeathVisualRoll?: () => void,
-    onRegenerateAfterDeath?: () => Promise<void> | void
-  ) {
-    this.onDeathVisualRoll = onDeathVisualRoll;
-    this.onRegenerateAfterDeath = onRegenerateAfterDeath;
-  }
+    private onCountdownUpdate: (countdown: number) => void
+  ) {}
 
   generateCharacter(): void {
     if (this.rolling) return;
@@ -72,6 +66,46 @@ export class CharacterGenerator {
     this.rolling = false;
   }
 
+  /**
+   * Generates a character while driving the visual dice roll if available.
+   * UI components (overlay, buttons) remain the page's responsibility.
+   */
+  async generateCharacterWithVisuals(): Promise<void> {
+    if (this.rolling) return;
+    // If dice visuals aren't available, fallback to logical generation
+    if (!isDiceBoxInitialized()) {
+      this.generateCharacter();
+      return;
+    }
+
+    this.setRolling(true);
+
+    // Compute faces deterministically with DiceRoll (source of truth)
+    const blues: number[] = [];
+    const reds: number[] = [];
+    const values: number[] = [];
+    for (let i = 0; i < ATTRIBUTES.length; i++) {
+      const bRoll = new DiceRoll('1d4');
+      const rRoll = new DiceRoll('1d4');
+      const b = Number(bRoll.total);
+      const r = Number(rRoll.total);
+      blues.push(b);
+      reds.push(r);
+      values.push(b - r);
+    }
+
+    const perf = trackDiceAnimationPerformance();
+    try {
+      await rollAttributesVisualOnePassForced(blues, reds);
+      const attributes: Attribute[] = ATTRIBUTES.map((name, idx) => ({ name, value: values[idx] ?? 0 }));
+      this.processAttributes(attributes, perf.end);
+    } catch (err) {
+      console.error('Visual dice roll failed, fallback to logical:', err);
+      this.setRolling(false);
+      this.generateCharacter();
+    }
+  }
+
   setRolling(value: boolean) {
     this.rolling = value;
   }
@@ -86,9 +120,6 @@ export class CharacterGenerator {
     let countdown = DEATH_COUNTDOWN_SECONDS;
     this.onDeathBannerShow(countdown);
 
-    // Trigger visual roll at countdown start if provided
-    try { this.onDeathVisualRoll?.(); } catch { /* noop */ }
-
     this.countdownInterval = setInterval(() => {
       countdown--;
       this.onCountdownUpdate(countdown);
@@ -96,9 +127,7 @@ export class CharacterGenerator {
       if (countdown <= 0) {
         this.clearCountdown();
         this.onDeathBannerHide();
-        Promise.resolve(this.onRegenerateAfterDeath?.()).finally(() => {
-          this.generateCharacter();
-        });
+        this.generateCharacter();
       }
     }, 1000);
   }
