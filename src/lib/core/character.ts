@@ -96,13 +96,16 @@ export class CharacterGenerator {
 
     const perf = trackDiceAnimationPerformance();
     try {
-  await rollDices(blues, reds);
+      await rollDices(blues, reds);
       const attributes: Attribute[] = ATTRIBUTES.map((name, idx) => ({ name, value: values[idx] ?? 0 }));
       this.processAttributes(attributes, perf.end);
     } catch (err) {
       console.error('Visual dice roll failed, fallback to logical:', err);
-      this.setRolling(false);
+      // Ensure perf timer is closed on error as well
+  try { perf.end(); } catch { /* ignore perf end errors */ }
       this.generateCharacter();
+    } finally {
+      this.setRolling(false);
     }
   }
 

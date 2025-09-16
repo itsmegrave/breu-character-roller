@@ -1,6 +1,8 @@
 // Revised DiceBox wrapper using the actual API pattern from provided example.
 // Provides promise-based roll resolution and graceful fallback detection.
 
+import { DICE_BLUE_BG, DICE_RED_BG, DICE_PIPS_LIGHT } from '$lib/dice/constants';
+
 interface DiceBoxInstance {
   initialize: () => Promise<void>;
   roll: (notation: string) => void;
@@ -35,11 +37,6 @@ let initializing = false;
 let initialized = false;
 let lastInitError: unknown = null;
 let rolling = false;
-
-// Color constants for dice themes
-const DICE_BLUE_BG = '#1e3a8a'; // dark indigo
-const DICE_RED_BG = '#991b1b';  // dark red
-const DICE_PIPS_LIGHT = '#fff';
 
 type Resolver = (results: unknown) => void;
 const pendingResolvers: Resolver[] = [];
@@ -100,8 +97,8 @@ export async function initDiceBoxDual(selectors: { blue: string; red: string }):
     });
     await Promise.all([diceBoxBlue.initialize(), diceBoxRed.initialize()]);
     // Pre-apply darker themes so the first roll uses the desired colors
-  updateDiceThemeFor(diceBoxBlue, { background: DICE_BLUE_BG, foreground: DICE_PIPS_LIGHT, material: 'plastic', texture: 'none' });
-  updateDiceThemeFor(diceBoxRed, { background: DICE_RED_BG, foreground: DICE_PIPS_LIGHT, material: 'plastic', texture: 'none' });
+    updateDiceThemeFor(diceBoxBlue, { background: DICE_BLUE_BG, foreground: DICE_PIPS_LIGHT, material: 'plastic', texture: 'none' });
+    updateDiceThemeFor(diceBoxRed, { background: DICE_RED_BG, foreground: DICE_PIPS_LIGHT, material: 'plastic', texture: 'none' });
     initialized = true;
   } catch (e) {
     lastInitError = e;
@@ -168,18 +165,6 @@ function rollVisualOn(instance: DiceBoxInstance, notation: string, timeoutMs = 4
   });
 }
 
-export async function rollAttributesVisual(attributeCount: number): Promise<number[]> {
-  const values: number[] = [];
-  for (let i = 0; i < attributeCount; i++) {
-    const first = await rollVisual('1d4');
-    const second = await rollVisual('1d4');
-    const a = first.dice[0]?.value ?? 0;
-    const b = second.dice[0]?.value ?? 0;
-    values.push(a - b);
-  }
-  return values;
-}
-
 /**
  * Update DiceBox theme colors. Useful to distinguish dice colors between rolls.
  */
@@ -214,35 +199,6 @@ function updateDiceThemeFor(instance: DiceBoxInstance | null, opts: { background
   });
 }
 
-/**
- * Batched attribute roll: rolls N d4 as RED, then N d4 as BLUE, and returns BLUE - RED for each pair.
- */
-export async function rollAttributesVisualBatched(attributeCount: number): Promise<number[]> {
-  // Roll RED batch
-  updateDiceTheme({ background: DICE_RED_BG, foreground: DICE_PIPS_LIGHT });
-  const red = await rollVisual(`${attributeCount}d4`);
-
-  // Roll BLUE batch
-  updateDiceTheme({ background: DICE_BLUE_BG, foreground: DICE_PIPS_LIGHT });
-  const blue = await rollVisual(`${attributeCount}d4`);
-
-  const reds = red.dice.map((d) => d.value ?? 0);
-  const blues = blue.dice.map((d) => d.value ?? 0);
-
-  const values: number[] = [];
-  for (let i = 0; i < attributeCount; i++) {
-    const r = reds[i] ?? 0;
-    const b = blues[i] ?? 0;
-    values.push(b - r);
-  }
-  console.log(values);
-  return values;
-}
-
-/**
- * One-pass attribute roll with forced outcomes: use predetermined faces for BLUE first then RED.
- * Ensures visual dice exactly match the logical results used to compute attributes.
- */
 /**
  * Drive two overlaid DiceBoxes with predetermined faces for each color.
  * - Blue and Red arrays can be different lengths; both will be rolled visually as provided.
@@ -279,6 +235,9 @@ export async function rollDices(blueFaces: number[], redFaces: number[]): Promis
     rolling = false;
   }
 }
+
+// Alias for clarity: dual visual roll with predetermined faces
+export const rollVisualDualWithFaces = rollDices;
 
 function internalComplete(results: unknown) {
   while (pendingResolvers.length) {

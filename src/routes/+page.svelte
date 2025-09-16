@@ -32,16 +32,6 @@
     }, ms);
   }
 
-  function makeRandomFaces(count: number): { blues: number[]; reds: number[] } {
-    const blues: number[] = [];
-    const reds: number[] = [];
-    for (let i = 0; i < count; i++) {
-      blues.push(Math.ceil(Math.random() * 4));
-      reds.push(Math.ceil(Math.random() * 4));
-    }
-    return { blues, reds };
-  }
-
   onMount(async () => {
     initWebVitals();
     trackFontLoadingPerformance();
