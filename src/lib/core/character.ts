@@ -102,7 +102,7 @@ export class CharacterGenerator {
     } catch (err) {
       console.error('Visual dice roll failed, fallback to logical:', err);
       // Ensure perf timer is closed on error as well
-  try { perf.end(); } catch { /* ignore perf end errors */ }
+  try { perf.end(); } catch (perfErr) { console.error('Error ending performance timer:', perfErr); }
       this.generateCharacter();
     } finally {
       this.setRolling(false);
