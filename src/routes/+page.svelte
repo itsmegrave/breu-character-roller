@@ -2,14 +2,13 @@
   import { onMount, onDestroy } from 'svelte';
   import { initWebVitals, trackFontLoadingPerformance } from '$lib/metrics/web-vitals';
   import { CharacterGenerator, calculateCountdownProgress, ATTRIBUTES } from '$lib/core/character';
-  import { DiceRoll } from 'rpg-dice-roller';
   import { getRandomDeathPhrase } from '$lib/core/constants';
   import type { Attribute } from '$lib/types';
   import { initDiceBoxDual, rollAttributesVisualOnePassForced, isDiceBoxInitialized, isDiceBoxRolling, clearDice } from '$lib/dice';
 
   let attributeValues = $state<Attribute[]>([]);
   let showAttributes = $state(false);
-  let showDeathBanner = $state(false);
+  let showWeaklingBanner = $state(false);
   let countdown = $state(5);
   let currentDeathPhrase = $state('');
 
@@ -54,11 +53,11 @@
       },
       (initialCountdown: number) => {
         currentDeathPhrase = getRandomDeathPhrase();
-        showDeathBanner = true;
+  showWeaklingBanner = true;
         countdown = initialCountdown;
       },
       () => {
-        showDeathBanner = false;
+  showWeaklingBanner = false;
       },
       (newCountdown: number) => {
         countdown = newCountdown;
@@ -110,9 +109,9 @@
   </h1>
 
   <button
-  class="rounded-lg border-2 border-white bg-black px-10 py-4 text-2xl text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white {(showDeathBanner || isRollingVisual || characterGenerator?.isRolling || isDiceBoxRolling()) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-white hover:text-black'}"
+  class="rounded-lg border-2 border-white bg-black px-10 py-4 text-2xl text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white {(showWeaklingBanner || isRollingVisual || characterGenerator?.isRolling || isDiceBoxRolling()) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-white hover:text-black'}"
     onclick={handleGenerateCharacter}
-  disabled={showDeathBanner || isRollingVisual || characterGenerator?.isRolling || isDiceBoxRolling()}
+  disabled={showWeaklingBanner || isRollingVisual || characterGenerator?.isRolling || isDiceBoxRolling()}
     aria-describedby="page-title"
     aria-label="Rolar dados para gerar atributos de personagem"
     aria-expanded={showAttributes}
@@ -146,7 +145,7 @@
     aria-hidden="true"
   ></div>
 
-  {#if showDeathBanner}
+  {#if showWeaklingBanner}
     <div
       class="mt-8 w-full bg-white border-2 border-white p-6 text-center animate-pulse mx-4"
       role="alert"

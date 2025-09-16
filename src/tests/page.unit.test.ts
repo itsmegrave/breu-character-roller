@@ -77,7 +77,7 @@ describe('RPG Character Roller - Unit Tests', () => {
     test('simulates 1d4-1d4 possible outcomes', () => {
       // Test the range of possible outcomes for 1d4-1d4
       const possibleOutcomes = [-3, -2, -1, 0, 1, 2, 3];
-      
+
       // Each outcome should be mathematically possible
       expect(possibleOutcomes.includes(-3)).toBe(true); // 1-4
       expect(possibleOutcomes.includes(0)).toBe(true);  // 2-2, 3-3, 4-4
@@ -91,19 +91,19 @@ describe('RPG Character Roller - Unit Tests', () => {
   });
 
   describe('Component State Logic', () => {
-    test('button should be disabled during death countdown', () => {
-      const isDeathBannerVisible = true;
+    test('button should be disabled during weakling countdown', () => {
+      const isWeaklingBannerVisible = true;
       const countdown = 3;
 
-      const shouldDisableButton = isDeathBannerVisible && countdown > 0;
+      const shouldDisableButton = isWeaklingBannerVisible && countdown > 0;
       expect(shouldDisableButton).toBe(true);
     });
 
-    test('button should be enabled when not in death state', () => {
-      const isDeathBannerVisible = false;
+    test('button should be enabled when not in weakling state', () => {
+      const isWeaklingBannerVisible = false;
       const countdown = 0;
 
-      const shouldDisableButton = isDeathBannerVisible && countdown > 0;
+      const shouldDisableButton = isWeaklingBannerVisible && countdown > 0;
       expect(shouldDisableButton).toBe(false);
     });
 

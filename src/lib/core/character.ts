@@ -46,8 +46,8 @@ export class CharacterGenerator {
 
   constructor(
     private onAttributesGenerated: (attributes: Attribute[]) => void,
-    private onDeathBannerShow: (countdown: number) => void,
-    private onDeathBannerHide: () => void,
+    private onWeaklingBannerShow: (countdown: number) => void,
+    private onWeaklingBannerHide: () => void,
     private onCountdownUpdate: (countdown: number) => void
   ) {}
 
@@ -118,7 +118,7 @@ export class CharacterGenerator {
     this.clearCountdown();
 
     let countdown = DEATH_COUNTDOWN_SECONDS;
-    this.onDeathBannerShow(countdown);
+  this.onWeaklingBannerShow(countdown);
 
     this.countdownInterval = setInterval(() => {
       countdown--;
@@ -126,7 +126,7 @@ export class CharacterGenerator {
 
       if (countdown <= 0) {
         this.clearCountdown();
-        this.onDeathBannerHide();
+  this.onWeaklingBannerHide();
         this.generateCharacter();
       }
     }, 1000);

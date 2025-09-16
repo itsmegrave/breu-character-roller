@@ -10,7 +10,7 @@ export interface Attribute {
 export interface CharacterRollerState {
   attributeValues: Attribute[];
   showAttributes: boolean;
-  showDeathBanner: boolean;
+  showWeaklingBanner: boolean;
   countdown: number;
 }
 
