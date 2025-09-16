@@ -1,19 +1,38 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { initWebVitals, trackFontLoadingPerformance } from '$lib/web-vitals';
-  import { CharacterGenerator, calculateCountdownProgress } from '$lib/character-generator';
-  import { getRandomDeathPhrase } from '$lib/types';
+  import { initWebVitals, trackFontLoadingPerformance } from '$lib/metrics/web-vitals';
+  import { CharacterGenerator, calculateCountdownProgress } from '$lib/core/character';
+  import { getRandomDeathPhrase } from '$lib/core/constants';
   import type { Attribute } from '$lib/types';
+  import { initDiceBoxDual, isDiceBoxRolling, clearDice } from '$lib/dice';
 
   let attributeValues = $state<Attribute[]>([]);
   let showAttributes = $state(false);
-  let showDeathBanner = $state(false);
+  let showWeaklingBanner = $state(false);
   let countdown = $state(5);
   let currentDeathPhrase = $state('');
 
-  let characterGenerator: CharacterGenerator;
+  let characterGenerator = $state<CharacterGenerator>();
 
-  onMount(() => {
+  // Dual DiceBox renders into two overlaid elements for BLUE and RED
+  let diceBlueEl: HTMLDivElement | null = null;
+  let diceRedEl: HTMLDivElement | null = null;
+  let showDiceOverlay = $state(false);
+  let overlayHideTimer: ReturnType<typeof setTimeout> | null = null;
+  let isRollingVisual = $state(false);
+  let diceInitFailed = $state(false);
+
+  function showOverlayFor(ms = 3000) {
+    showDiceOverlay = true;
+    if (overlayHideTimer) clearTimeout(overlayHideTimer);
+    overlayHideTimer = setTimeout(() => {
+      showDiceOverlay = false;
+      overlayHideTimer = null;
+      clearDice();
+    }, ms);
+  }
+
+  onMount(async () => {
     initWebVitals();
     trackFontLoadingPerformance();
 
@@ -24,25 +43,44 @@
       },
       (initialCountdown: number) => {
         currentDeathPhrase = getRandomDeathPhrase();
-        showDeathBanner = true;
+  showWeaklingBanner = true;
         countdown = initialCountdown;
       },
       () => {
-        showDeathBanner = false;
+  showWeaklingBanner = false;
       },
       (newCountdown: number) => {
         countdown = newCountdown;
       }
     );
+    // Initialize dual dice boxes (browser only)
+    try {
+      await initDiceBoxDual({ blue: '#dice-blue', red: '#dice-red' });
+    } catch (e) {
+      diceInitFailed = true;
+      console.warn('Failed to init dice box, falling back to logical rolls only:', e);
+    }
   });
 
   onDestroy(() => {
     characterGenerator?.destroy();
   });
 
-  const handleGenerateCharacter = () => {
-    characterGenerator?.generateCharacter();
-  };
+  async function handleGenerateCharacter() {
+    if (!characterGenerator) return;
+    if (characterGenerator.isRolling || isRollingVisual) return;
+
+    // Page-only UI concerns
+    showAttributes = false;
+    isRollingVisual = true;
+    showOverlayFor(3000);
+
+    try {
+      await characterGenerator.generateCharacterWithVisuals();
+    } finally {
+      isRollingVisual = false;
+    }
+  }
 </script>
 
 <svelte:head>
@@ -61,17 +99,35 @@
   </h1>
 
   <button
-    class="rounded-lg border-2 border-white bg-black px-10 py-4 text-2xl text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white {showDeathBanner ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-white hover:text-black'}"
+  class="rounded-lg border-2 border-white bg-black px-10 py-4 text-2xl text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white {(showWeaklingBanner || isRollingVisual || characterGenerator?.isRolling || isDiceBoxRolling()) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-white hover:text-black'}"
     onclick={handleGenerateCharacter}
-    disabled={showDeathBanner}
+  disabled={showWeaklingBanner || isRollingVisual || characterGenerator?.isRolling || isDiceBoxRolling()}
     aria-describedby="page-title"
     aria-label="Rolar dados para gerar atributos de personagem"
     aria-expanded={showAttributes}
     aria-controls={showAttributes ? "attributes-section" : undefined}
     type="button"
   >
-    Encare o Breu
+      Encare o Breu
   </button>
+  {#if diceInitFailed}
+    <p class="mt-2 text-sm text-red-300" style="font-family: var(--font-encode-sans);">
+      Modo visual indisponível. Usando rolagem lógica.
+    </p>
+  {/if}
+  <!-- Dice visualization containers: full-screen overlay (two layers) -->
+  <div
+    id="dice-blue"
+    bind:this={diceBlueEl}
+    class={`fixed inset-0 w-screen h-screen overflow-hidden pointer-events-none z-10 transition-opacity duration-700 ease-in-out ${showDiceOverlay ? 'opacity-100' : 'opacity-0'}`}
+    aria-hidden="true"
+  ></div>
+  <div
+    id="dice-red"
+    bind:this={diceRedEl}
+    class={`fixed inset-0 w-screen h-screen overflow-hidden pointer-events-none z-10 transition-opacity duration-700 ease-in-out ${showDiceOverlay ? 'opacity-100' : 'opacity-0'}`}
+    aria-hidden="true"
+  ></div>
 
   <div
     class="mt-8 h-0.5 w-full bg-white"
@@ -79,7 +135,7 @@
     aria-hidden="true"
   ></div>
 
-  {#if showDeathBanner}
+  {#if showWeaklingBanner}
     <div
       class="mt-8 w-full bg-white border-2 border-white p-6 text-center animate-pulse mx-4"
       role="alert"

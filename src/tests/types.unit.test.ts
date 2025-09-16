@@ -1,4 +1,4 @@
-import { describe, test, expect } from 'bun:test';
+import { describe, test, expect } from 'vitest';
 import * as types from '../lib/types';
 
 describe('types', () => {
@@ -12,7 +12,7 @@ describe('types', () => {
     const state: types.CharacterRollerState = {
       attributeValues: [{ name: 'FOR', value: 1 }],
       showAttributes: true,
-      showDeathBanner: false,
+      showWeaklingBanner: false,
       countdown: 3
     };
     expect(state.attributeValues[0].name).toBe('FOR');
