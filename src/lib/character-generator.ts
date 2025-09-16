@@ -78,27 +78,57 @@ export function calculateCountdownProgress(countdown: number, maxTime: number = 
  */
 export class CharacterGenerator {
   private countdownInterval: ReturnType<typeof setInterval> | null = null;
+  // Flag to indicate a visual dice roll is currently in progress (to coordinate UI state)
+  private rolling = false;
+  private onDeathVisualRoll?: () => void;
+  private onRegenerateAfterDeath?: () => Promise<void> | void;
 
   constructor(
     private onAttributesGenerated: (attributes: Attribute[]) => void,
     private onDeathBannerShow: (countdown: number) => void,
     private onDeathBannerHide: () => void,
-    private onCountdownUpdate: (countdown: number) => void
-  ) {}
+    private onCountdownUpdate: (countdown: number) => void,
+    onDeathVisualRoll?: () => void,
+    onRegenerateAfterDeath?: () => Promise<void> | void
+  ) {
+    this.onDeathVisualRoll = onDeathVisualRoll;
+    this.onRegenerateAfterDeath = onRegenerateAfterDeath;
+  }
 
   /**
    * Generates a new character and handles death logic
    */
   generateCharacter(): void {
+    if (this.rolling) return; // prevent overlapping rolls
     const { attributes, performanceEnd } = generateAttributes();
+    this.processAttributes(attributes, performanceEnd);
+  }
 
+  /**
+   * Processes a set of attributes (e.g., produced by an external visual dice system)
+   * and applies standard post-generation logic (death check, performance tracking end, etc.)
+   * @param attributes Generated attributes array
+   * @param performanceEnd Optional performance end callback (if external system also tracked perf)
+   */
+  processAttributes(attributes: Attribute[], performanceEnd?: () => number): void {
     this.onAttributesGenerated(attributes);
-
     if (shouldTriggerDeath(attributes)) {
       this.startDeathCountdown();
     }
+    performanceEnd?.();
+    this.rolling = false; // clear rolling state if it was set
+  }
 
-    performanceEnd();
+  /**
+   * Marks the generator as rolling (used by UI before visual dice animation starts)
+   */
+  setRolling(value: boolean) {
+    this.rolling = value;
+  }
+
+  /** Returns whether a roll is currently in progress (visual or logical) */
+  get isRolling(): boolean {
+    return this.rolling;
   }
 
   /**
@@ -118,8 +148,10 @@ export class CharacterGenerator {
       if (countdown <= 0) {
         this.clearCountdown();
         this.onDeathBannerHide();
-        // Automatically re-generate character
-        this.generateCharacter();
+        // Allow UI to animate dice after countdown finishes before regenerating
+        Promise.resolve(this.onRegenerateAfterDeath?.()).finally(() => {
+          this.generateCharacter();
+        });
       }
     }, 1000);
   }
