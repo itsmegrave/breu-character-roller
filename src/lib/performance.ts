@@ -3,7 +3,7 @@
  * Call this early in your app lifecycle
  */
 
-import { initWebVitals } from './web-vitals';
+import { initWebVitals } from './metrics/web-vitals';
 
 export function initPerformanceMonitoring() {
   // Initialize Web Vitals as early as possible
