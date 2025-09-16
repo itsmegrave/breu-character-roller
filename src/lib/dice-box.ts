@@ -36,6 +36,11 @@ let initialized = false;
 let lastInitError: unknown = null;
 let rolling = false;
 
+// Color constants for dice themes
+const DICE_BLUE_BG = '#1e3a8a'; // dark indigo
+const DICE_RED_BG = '#991b1b';  // dark red
+const DICE_PIPS_LIGHT = '#fff';
+
 type Resolver = (results: unknown) => void;
 const pendingResolvers: Resolver[] = [];
 const instanceResolvers = new Map<DiceBoxInstance, Resolver[]>();
@@ -94,6 +99,9 @@ export async function initDiceBoxDual(selectors: { blue: string; red: string }):
       onRollComplete: (results: unknown) => internalCompleteFor(diceBoxRed!, results)
     });
     await Promise.all([diceBoxBlue.initialize(), diceBoxRed.initialize()]);
+    // Pre-apply darker themes so the first roll uses the desired colors
+  updateDiceThemeFor(diceBoxBlue, { background: DICE_BLUE_BG, foreground: DICE_PIPS_LIGHT, material: 'plastic', texture: 'none' });
+  updateDiceThemeFor(diceBoxRed, { background: DICE_RED_BG, foreground: DICE_PIPS_LIGHT, material: 'plastic', texture: 'none' });
     initialized = true;
   } catch (e) {
     lastInitError = e;
@@ -211,11 +219,11 @@ function updateDiceThemeFor(instance: DiceBoxInstance | null, opts: { background
  */
 export async function rollAttributesVisualBatched(attributeCount: number): Promise<number[]> {
   // Roll RED batch
-  updateDiceTheme({ background: '#991b1b', foreground: '#fff' });
+  updateDiceTheme({ background: DICE_RED_BG, foreground: DICE_PIPS_LIGHT });
   const red = await rollVisual(`${attributeCount}d4`);
 
   // Roll BLUE batch
-  updateDiceTheme({ background: '#1e3a8a', foreground: '#fff' });
+  updateDiceTheme({ background: DICE_BLUE_BG, foreground: DICE_PIPS_LIGHT });
   const blue = await rollVisual(`${attributeCount}d4`);
 
   const reds = red.dice.map((d) => d.value ?? 0);
@@ -247,8 +255,8 @@ export async function rollDices(blueFaces: number[], redFaces: number[]): Promis
   if (!(diceBoxBlue && diceBoxRed && initialized)) throw new Error('Dual DiceBox not initialized');
 
   // Update themes per instance
-  updateDiceThemeFor(diceBoxBlue, { background: '#1e3a8a', foreground: '#fff', material: 'plastic', texture: 'none' });
-  updateDiceThemeFor(diceBoxRed, { background: '#991b1b', foreground: '#fff', material: 'plastic', texture: 'none' });
+  updateDiceThemeFor(diceBoxBlue, { background: DICE_BLUE_BG, foreground: DICE_PIPS_LIGHT, material: 'plastic', texture: 'none' });
+  updateDiceThemeFor(diceBoxRed, { background: DICE_RED_BG, foreground: DICE_PIPS_LIGHT, material: 'plastic', texture: 'none' });
 
   const blueNotation = `${nBlue}d4@${blueFaces.join(',')}`;
   const redNotation = `${nRed}d4@${redFaces.join(',')}`;
